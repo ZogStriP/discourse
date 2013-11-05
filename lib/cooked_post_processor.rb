@@ -20,6 +20,8 @@ class CookedPostProcessor
     post_process_attachments
     post_process_images
     post_process_oneboxes
+    pull_hotlinked_images
+    apply_cdn
   end
 
   def clean_up_reverse_index
@@ -29,7 +31,6 @@ class CookedPostProcessor
   def post_process_attachments
     attachments.each do |attachment|
       href = attachment['href']
-      attachment['href'] = relative_to_absolute(href)
       # update reverse index
       if upload = Upload.get_from_url(href)
         associate_to_post(upload)
@@ -45,8 +46,6 @@ class CookedPostProcessor
       if img['src'].present?
         # keep track of the original src
         src = img['src']
-        # make sure the src is absolute (when working with locally uploaded files)
-        img['src'] = relative_to_absolute(src)
         # make sure the img has proper width and height attributes
         update_dimensions!(img)
         # retrieve the associated upload, if any
@@ -72,21 +71,45 @@ class CookedPostProcessor
     result = Oneboxer.apply(@doc) do |url, element|
       Oneboxer.onebox(url, args)
     end
-    # mark the post as dirty whenever a onebox as been baked
+    # mark the post as dirty whenever a onebox has been baked
     @dirty |= result.changed?
+  end
+
+  def pull_hotlinked_images
+    # we don't want to run the job if we're not allowed to crawl images
+    return unless SiteSetting.crawl_images
+    # we only want to run the job whenever it's changed by a user
+    return if @post.updated_by == Discourse.system_user
+    # make sure no other job is scheduled
+    Jobs.cancel_scheduled_job(:pull_hotlinked_images, post_id: @post.id)
+    # schedule the job
+    delay = SiteSetting.ninja_edit_window + 1
+    Jobs.enqueue_in(delay.minutes.to_i, :pull_hotlinked_images, post_id: @post.id)
+  end
+
+  def apply_cdn
+    @doc.css("a").each do |l|
+      href = l["href"].to_s
+      l["href"] = relative_to_absolute(href)
+    end
+
+    @doc.css("img").each do |l|
+      src = l["src"].to_s
+      l["src"] = relative_to_absolute(src)
+    end
+  end
+
+  def relative_to_absolute(url)
+    if url =~ /^\/[^\/]/
+      (Discourse.asset_host || Discourse.base_url_no_prefix) + url
+    else
+      url
+    end
   end
 
   def extract_images
     # do not extract images inside a onebox or a quote
     @doc.css("img") - @doc.css(".onebox-result img") - @doc.css(".quote img")
-  end
-
-  def relative_to_absolute(src)
-    if src =~ /^\/[^\/]/
-      Discourse.base_url_no_prefix + src
-    else
-      src
-    end
   end
 
   def update_dimensions!(img)
@@ -101,7 +124,7 @@ class CookedPostProcessor
   end
 
   def associate_to_post(upload)
-    return if PostUpload.where(post_id: @post.id, upload_id: upload.id).count > 0
+    return if PostUpload.where(post_id: @post.id, upload_id: upload.id).exists?
     PostUpload.create(post_id: @post.id, upload_id: upload.id)
   rescue ActiveRecord::RecordNotUnique
     # do not care if it's already associated
@@ -162,7 +185,7 @@ class CookedPostProcessor
     # replace the image by its thumbnail
     w = img["width"]
     h = img["height"]
-    img['src'] = relative_to_absolute(upload.thumbnail(w, h).url) if upload && upload.has_thumbnail?(w, h)
+    img['src'] = upload.thumbnail(w, h).url if upload && upload.has_thumbnail?(w, h)
 
     # then, some overlay informations
     meta = Nokogiri::XML::Node.new("div", @doc)
@@ -199,11 +222,16 @@ class CookedPostProcessor
   end
 
   def get_size_from_image_sizes(src, image_sizes)
-    [image_sizes[src]["width"], image_sizes[src]["height"]] if image_sizes.present? && image_sizes[src].present?
+    return unless image_sizes.present?
+    image_sizes.each do |image_size|
+      if image_size[0].include?(src)
+        return [image_size[0]["width"], image_size[0]["height"]]
+      end
+    end
   end
 
   def get_size(url)
-    uri = url
+    uri = relative_to_absolute(url)
     # make sure urls have a scheme (otherwise, FastImage will fail)
     uri = (SiteSetting.use_ssl? ? "https:" : "http:") + url if url && url.start_with?("//")
     return unless is_valid_image_uri?(uri)

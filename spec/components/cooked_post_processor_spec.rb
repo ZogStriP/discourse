@@ -3,7 +3,7 @@ require 'cooked_post_processor'
 
 describe CookedPostProcessor do
 
-  context "post_process" do
+  context ".post_process" do
 
     let(:post) { build(:post) }
     let(:cpp) { CookedPostProcessor.new(post) }
@@ -14,12 +14,14 @@ describe CookedPostProcessor do
       cpp.expects(:post_process_attachments).in_sequence(post_process)
       cpp.expects(:post_process_images).in_sequence(post_process)
       cpp.expects(:post_process_oneboxes).in_sequence(post_process)
+      cpp.expects(:pull_hotlinked_images).in_sequence(post_process)
+      cpp.expects(:apply_cdn).in_sequence(post_process)
       cpp.post_process
     end
 
   end
 
-  context "clean_up_reverse_index" do
+  context ".clean_up_reverse_index" do
 
     let(:post) { build(:post) }
     let(:cpp) { CookedPostProcessor.new(post) }
@@ -31,7 +33,7 @@ describe CookedPostProcessor do
 
   end
 
-  context "post_process_attachments" do
+  context ".post_process_attachments" do
 
     context "with attachment" do
 
@@ -54,7 +56,7 @@ describe CookedPostProcessor do
 
   end
 
-  context "post_process_images" do
+  context ".post_process_images" do
 
     context "with images in quotes and oneboxes" do
 
@@ -84,8 +86,6 @@ describe CookedPostProcessor do
       it "works" do
         Upload.expects(:get_from_url).returns(upload)
         cpp.post_process_images
-        # ensures absolute urls on uploaded images
-        cpp.html.should =~ /#{LocalStore.new.absolute_base_url}/
         # dirty
         cpp.should be_dirty
         # keeps the reverse index up to date
@@ -169,7 +169,7 @@ describe CookedPostProcessor do
 
   end
 
-  context "post_process_oneboxes" do
+  context ".post_process_oneboxes" do
 
     let(:post) { build(:post_with_youtube, id: 123) }
     let(:cpp) { CookedPostProcessor.new(post, invalidate_oneboxes: true) }
@@ -185,6 +185,46 @@ describe CookedPostProcessor do
 
     it "inserts the onebox without wrapping p" do
       cpp.html.should match_html "<div>GANGNAM STYLE</div>"
+    end
+
+  end
+
+  context ".pull_hotlinked_images" do
+
+    let(:post) { build(:post) }
+    let(:cpp) { CookedPostProcessor.new(post) }
+
+    it "does not run when crawl images is disabled" do
+      SiteSetting.stubs(:crawl_images).returns(false)
+      Jobs.expects(:cancel_scheduled_job).never
+      cpp.pull_hotlinked_images
+    end
+
+    context "when crawl_images? is enabled" do
+
+      before { SiteSetting.stubs(:crawl_images).returns(true) }
+
+      it "runs only when a user updated the post" do
+        post.updated_by = Discourse.system_user
+        Jobs.expects(:cancel_scheduled_job).never
+        cpp.pull_hotlinked_images
+      end
+
+      context "and the post has been updated by a user" do
+
+        before { post.id = 42 }
+
+        it "ensures only one job is scheduled right after the ninja_edit_window" do
+          Jobs.expects(:cancel_scheduled_job).with(:pull_hotlinked_images, post_id: post.id).once
+
+          delay = SiteSetting.ninja_edit_window + 1
+          Jobs.expects(:enqueue_in).with(delay.minutes, :pull_hotlinked_images, post_id: post.id).once
+
+          cpp.pull_hotlinked_images
+        end
+
+      end
+
     end
 
   end
@@ -265,6 +305,27 @@ describe CookedPostProcessor do
 
     it "doesn't throw an exception with a bad URI" do
       cpp.is_valid_image_uri?("http://do<main.com").should  == nil
+    end
+
+  end
+
+  context "relative_to_absolute" do
+
+    let(:post) { build(:post) }
+    let(:cpp) { CookedPostProcessor.new(post) }
+
+    it "uses the cdn when it is defined" do
+      Rails.configuration.action_controller.stubs(:asset_host).returns("http://my.cdn.org")
+      cpp.relative_to_absolute("/a.jpg").should == "http://my.cdn.org/a.jpg"
+    end
+
+    it "uses the unprefixed url by default" do
+      Discourse.stubs(:base_url_no_prefix).returns("http://my.discourse.org")
+      cpp.relative_to_absolute("/a.pdf").should == "http://my.discourse.org/a.pdf"
+    end
+
+    it "does not change schemaless urls" do
+      cpp.relative_to_absolute("//domain.com/a.jpg").should == "//domain.com/a.jpg"
     end
 
   end

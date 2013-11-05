@@ -1,9 +1,9 @@
 require 'spec_helper'
 require 'file_store/local_store'
 
-describe LocalStore do
+describe FileStore::LocalStore do
 
-  let(:store) { LocalStore.new }
+  let(:store) { FileStore::LocalStore.new }
 
   let(:upload) { build(:upload) }
   let(:uploaded_file) do
@@ -15,12 +15,7 @@ describe LocalStore do
 
   let(:optimized_image) { build(:optimized_image) }
 
-  it "is internal" do
-    store.internal?.should == true
-    store.external?.should == false
-  end
-
-  describe "store_upload" do
+  describe ".store_upload" do
 
     it "returns a relative url" do
       Time.stubs(:now).returns(Time.utc(2013, 2, 17, 12, 0, 0, 0))
@@ -31,7 +26,7 @@ describe LocalStore do
 
   end
 
-  describe "store_optimized_image" do
+  describe ".store_optimized_image" do
 
     it "returns a relative url" do
       store.expects(:copy_file)
@@ -40,7 +35,16 @@ describe LocalStore do
 
   end
 
-  describe "remove_upload" do
+  describe ".store_avatar" do
+
+    it "returns a relative url" do
+      store.expects(:copy_file)
+      store.store_avatar({}, upload, 100).should == "/uploads/default/avatars/e9d/71f/5ee7c92d6d/100.jpg"
+    end
+
+  end
+
+  describe ".remove_upload" do
 
     it "does not delete non uploaded" do
       File.expects(:delete).never
@@ -58,16 +62,15 @@ describe LocalStore do
 
   end
 
-  describe "remove_optimized_image" do
+  describe ".remove_optimized_image" do
 
   end
 
-  describe "remove_avatar" do
+  describe ".remove_avatar" do
 
   end
 
-
-  describe "has_been_uploaded?" do
+  describe ".has_been_uploaded?" do
 
     it "identifies local or relatives urls" do
       Discourse.expects(:base_url_no_prefix).returns("http://discuss.site.com")
@@ -83,6 +86,27 @@ describe LocalStore do
     it "does not match dummy urls" do
       store.has_been_uploaded?("http://domain.com/uploads/default/42/0123456789ABCDEF.jpg").should == false
     end
+
+  end
+
+  describe ".absolute_base_url" do
+
+  end
+
+  describe ".relative_base_url" do
+
+  end
+
+  it "is internal" do
+    store.internal?.should be_true
+    store.external?.should be_false
+  end
+
+  describe ".path_for" do
+
+  end
+
+  describe ".absolute_avatar_template" do
 
   end
 

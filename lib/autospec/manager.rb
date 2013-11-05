@@ -146,6 +146,9 @@ class Autospec::Manager
     specs = []
     hit = false
 
+    puts "PROCESS CHANGE"
+    p files
+
     files.each do |file|
       @runners.each do |runner|
         # reloaders
@@ -179,6 +182,9 @@ class Autospec::Manager
   end
 
   def queue_specs(specs)
+    puts "QUEUE_SPECS"
+    p specs
+
     if specs.length == 0
       locked = @mutex.try_lock
       if locked
@@ -187,10 +193,14 @@ class Autospec::Manager
       end
       return
     else
+      p "ABORTING RUNNERS"
       abort_runners
+      p "RUNNERS ABORTED!!"
     end
 
+    puts "BEFORE MUTEX"
     @mutex.synchronize do
+      puts "INSIDE MUTEX"
       specs.each do |file, spec, runner|
         # make sure there's no other instance of this spec in the queue
         @queue.delete_if { |f, s, r| s.strip == spec.strip && r == runner }
@@ -205,7 +215,9 @@ class Autospec::Manager
           @queue.unshift([file, spec, runner])
         end
       end
+      puts "BEFORE SIGNAL"
       @signal.signal
+      puts "AFTER SIGNAL"
     end
   end
 

@@ -143,8 +143,6 @@ module PrettyText
       baked = context.eval('Discourse.Markdown.markdownConverter(opts).makeHtml(raw)')
     end
 
-    # we need some minimal server side stuff, apply CDN and TODO filter disallowed markup
-    baked = apply_cdn(baked, Rails.configuration.action_controller.asset_host)
     baked
   end
 
@@ -158,27 +156,6 @@ module PrettyText
       r = v8.eval("Discourse.Utilities.avatarImg({ avatarTemplate: avatarTemplate, size: size });")
     end
     r
-  end
-
-  def self.apply_cdn(html, url)
-    return html unless url
-
-    image = /\.(png|jpg|jpeg|gif|bmp|tif|tiff)$/i
-    relative = /^\/[^\/]/
-
-    doc = Nokogiri::HTML.fragment(html)
-
-    doc.css("a").each do |l|
-      href = l["href"].to_s
-      l["href"] = url + href if href =~ relative && href =~ image
-    end
-
-    doc.css("img").each do |l|
-      src = l["src"].to_s
-      l["src"] = url + src if src =~ relative
-    end
-
-    doc.to_s
   end
 
   def self.cook(text, opts={})

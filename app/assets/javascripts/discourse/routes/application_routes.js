@@ -30,20 +30,27 @@ Discourse.Route.buildRoutes(function() {
       router.route(filter + "Category", { path: "/category/:slug/l/" + filter + "/more" });
       router.route(filter + "Category", { path: "/category/:parentSlug/:slug/l/" + filter });
       router.route(filter + "Category", { path: "/category/:parentSlug/:slug/l/" + filter + "/more" });
-
     });
 
     // the homepage is the first item of the 'top_menu' site setting
     var homepage = Discourse.SiteSettings.top_menu.split("|")[0].split(",")[0];
     this.route(homepage, { path: '/' });
 
+    // categories page
     this.route('categories', { path: '/categories' });
+
+    // category
     this.route('category', { path: '/category/:slug' });
     this.route('category', { path: '/category/:slug/more' });
     this.route('categoryNone', { path: '/category/:slug/none' });
     this.route('categoryNone', { path: '/category/:slug/none/more' });
     this.route('category', { path: '/category/:parentSlug/:slug' });
     this.route('category', { path: '/category/:parentSlug/:slug/more' });
+
+    // top page
+    this.route('top', { path: '/top' });
+    this.route('topCategory', { path: "/category/:slug/l/top" });
+    this.route('topCategory', { path: "/category/:parentSlug/:slug/l/top" });
   });
 
   // User routes

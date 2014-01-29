@@ -14,8 +14,8 @@ describe Jobs::Importer do
   end
 
   before do
-    Discourse.stubs(:enable_maintenance_mode).returns(true)
-    Discourse.stubs(:disable_maintenance_mode).returns(true)
+    Discourse.stubs(:enable_readonly_mode).returns(true)
+    Discourse.stubs(:disable_readonly_mode).returns(true)
     Jobs::Importer.any_instance.stubs(:log).returns(true)
     Jobs::Importer.any_instance.stubs(:extract_uploads).returns(true)
     Jobs::Importer.any_instance.stubs(:extract_files).returns(true)
@@ -51,7 +51,7 @@ describe Jobs::Importer do
       it "should not start an import" do
         Import::JsonDecoder.expects(:new).never
         Jobs::Importer.any_instance.expects(:backup_tables).never
-        Discourse.expects(:enable_maintenance_mode).never
+        Discourse.expects(:enable_readonly_mode).never
         Jobs::Importer.new.execute( @importer_args ) rescue nil
       end
     end
@@ -74,8 +74,8 @@ describe Jobs::Importer do
           Jobs::Importer.new.execute( @invalid_args ) rescue nil
         end
 
-        it "should not put the site in maintenance mode" do
-          Discourse.expects(:enable_maintenance_mode).never
+        it "should not put the site in readonly mode" do
+          Discourse.expects(:enable_readonly_mode).never
           Jobs::Importer.new.execute( @invalid_args ) rescue nil
         end
       end
@@ -83,7 +83,7 @@ describe Jobs::Importer do
       context "when an import is already running" do
         before do
           Import::JsonDecoder.stubs(:new).returns( stub_everything )
-          Import.stubs(:is_import_running?).returns( true )
+          Import.stubs(:is_running?).returns( true )
         end
 
         it "should raise an error" do
@@ -97,7 +97,7 @@ describe Jobs::Importer do
 
       context "when an export is running" do
         before do
-          Export.stubs(:is_export_running?).returns( true )
+          Export.stubs(:is_running?).returns( true )
         end
 
         it "should raise an error" do
@@ -111,8 +111,8 @@ describe Jobs::Importer do
 
       context "when no export or import are running" do
         before do
-          Import.stubs(:is_import_running?).returns( false )
-          Export.stubs(:is_export_running?).returns( false )
+          Import.stubs(:is_running?).returns( false )
+          Export.stubs(:is_running?).returns( false )
         end
 
         it "without specifying a format should use json as the default format" do
@@ -180,25 +180,25 @@ describe Jobs::Importer do
 
             it "should indicate that an import is running" do
               seq = sequence('call sequence')
-              Import.expects(:set_import_started).in_sequence(seq).at_least_once
-              Import.expects(:set_import_is_not_running).in_sequence(seq).at_least_once
+              Import.expects(:mark_as_running!).in_sequence(seq).at_least_once
+              Import.expects(:mark_as_not_running!).in_sequence(seq).at_least_once
               Jobs::Importer.new.execute(@importer_args)
             end
 
-            it "should put the site in maintenance mode" do
+            it "should put the site in readonly mode" do
               seq = sequence('call sequence')
-              Import.is_import_running?.should be_false
-              Discourse.expects(:enable_maintenance_mode).in_sequence(seq).at_least_once
+              Import.is_running?.should be_false
+              Discourse.expects(:enable_readonly_mode).in_sequence(seq).at_least_once
               Jobs::Importer.any_instance.expects(:backup_tables).in_sequence(seq).at_least_once
               Jobs::Importer.any_instance.expects(:load_data).in_sequence(seq).at_least_once
               Jobs::Importer.new.execute( @importer_args )
             end
 
-            it "should take the site out of maintenance mode when it's done" do
+            it "should take the site out of readonly mode when it's done" do
               seq = sequence('call sequence')
               Jobs::Importer.any_instance.expects(:backup_tables).in_sequence(seq).at_least_once
               Jobs::Importer.any_instance.expects(:load_data).in_sequence(seq).at_least_once
-              Discourse.expects(:disable_maintenance_mode).in_sequence(seq).at_least_once
+              Discourse.expects(:disable_readonly_mode).in_sequence(seq).at_least_once
               Jobs::Importer.new.execute( @importer_args )
             end
           end
@@ -470,8 +470,8 @@ describe Jobs::Importer do
           users.should include(@user2)
         end
 
-        it "should take the site out of maintenance mode" do
-          Discourse.expects(:disable_maintenance_mode).at_least_once
+        it "should take the site out of readonly mode" do
+          Discourse.expects(:disable_readonly_mode).at_least_once
           Jobs::Importer.new.execute( @importer_args ) rescue nil
         end
       end

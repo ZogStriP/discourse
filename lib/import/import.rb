@@ -15,18 +15,17 @@ module Import
     'importer_is_running'
   end
 
-  def self.is_import_running?
-    $redis.get(import_running_key) == '1'
+  def self.mark_as_running!
+    $redis.set(import_running_key, '1')
   end
 
-  def self.set_import_started
-    $redis.set import_running_key, '1'
+  def self.is_running?
+    !!$redis.get(import_running_key)
   end
 
-  def self.set_import_is_not_running
-    $redis.del import_running_key
+  def self.mark_as_not_running!
+    $redis.del(import_running_key)
   end
-
 
   def self.clear_adapters
     @adapters = {}

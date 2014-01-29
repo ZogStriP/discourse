@@ -26,8 +26,8 @@ module Jobs
       ordered_models_for_import.each { |model| model.primary_key } # a HACK to workaround cache problems
 
       raise Import::ImportDisabledError   unless SiteSetting.allow_import?
-      raise Import::ImportInProgressError if Import::is_import_running?
-      raise Export::ExportInProgressError if Export::is_export_running?
+      raise Import::ImportInProgressError if Import::is_running?
+      raise Export::ExportInProgressError if Export::is_running?
 
       # Disable printing of NOTICE, DETAIL and other unimportant messages from postgresql
       User.exec_sql("SET client_min_messages TO WARNING")
@@ -63,17 +63,13 @@ module Jobs
     end
 
     def start_import
-      if @format != :json
-        raise Import::FormatInvalidError
-      elsif @archive_filename.nil?
-        raise Import::FilenameMissingError
-      else
-        extract_files
-        @decoder = Import::JsonDecoder.new( File.join(tmp_directory('import'), 'tables.json') )
-        Import.set_import_started
-        Discourse.enable_maintenance_mode
-      end
-      self
+      raise Import::FormatInvalidError if @format != :json
+      raise Import::FilenameMissingError if @archive_filename.nil?
+
+      extract_files
+      @decoder = Import::JsonDecoder.new( File.join(tmp_directory('import'), 'tables.json') )
+      Import.mark_as_running!
+      Discourse.enable_readonly_mode
     end
 
     def extract_files
@@ -90,13 +86,11 @@ module Jobs
           backup_and_setup_table( model )
         end
       end
-      self
     end
 
     def create_backup_schema
       User.exec_sql("DROP SCHEMA IF EXISTS #{BACKUP_SCHEMA} CASCADE")
       User.exec_sql("CREATE SCHEMA #{BACKUP_SCHEMA}")
-      self
     end
 
     def backup_and_setup_table( model )
@@ -104,7 +98,6 @@ module Jobs
       @index_definitions[model.table_name] = model.exec_sql("SELECT indexdef FROM pg_indexes WHERE tablename = '#{model.table_name}' and schemaname = 'public';").map { |x| x['indexdef'] }
       model.exec_sql("ALTER TABLE #{model.table_name} SET SCHEMA #{BACKUP_SCHEMA}")
       model.exec_sql("CREATE TABLE #{model.table_name} (LIKE #{BACKUP_SCHEMA}.#{model.table_name} INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING COMMENTS INCLUDING STORAGE);")
-      self
     end
 
     def load_data
@@ -115,7 +108,6 @@ module Jobs
           table_data: method(:load_table)
         }
       )
-      self
     end
 
     def set_schema_info(arg)
@@ -216,7 +208,6 @@ module Jobs
           model.exec_sql("ALTER TABLE #{model.table_name} ALTER COLUMN id SET DEFAULT nextval('#{seq_name}')")
         end
       end
-      self
     end
 
     def extract_uploads
@@ -240,8 +231,8 @@ module Jobs
     end
 
     def finish_import
-      Import.set_import_is_not_running
-      Discourse.disable_maintenance_mode
+      Import.mark_as_not_running!
+      Discourse.disable_readonly_mode
       remove_tmp_directory('import')
 
       if @warnings.size > 0

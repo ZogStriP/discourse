@@ -18,20 +18,20 @@ describe Export do
     end
   end
 
-  describe "is_export_running?" do
+  describe "is_running?" do
     it "should return true when an export is in progress" do
       $redis.stubs(:get).with(Export.export_running_key).returns('1')
-      Export.is_export_running?.should be_true
+      Export.is_running?.should be_true
     end
 
     it "should return false when an export is not happening" do
       $redis.stubs(:get).with(Export.export_running_key).returns('0')
-      Export.is_export_running?.should be_false
+      Export.is_running?.should be_false
     end
 
     it "should return false when an export has never been run" do
       $redis.stubs(:get).with(Export.export_running_key).returns(nil)
-      Export.is_export_running?.should be_false
+      Export.is_running?.should be_false
     end
   end
 end

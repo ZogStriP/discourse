@@ -1274,6 +1274,42 @@ en:
         all_users: "All Users"
         note_html: "Keep this key <strong>secret</strong>, all users that have it may create arbitrary posts on the forum as any user."
 
+      backups:
+        title: "Backups"
+        menu:
+          backups: "Backups"
+          logs: "Logs"
+        none: "No backup available."
+        columns:
+          filename: "Filename"
+          size: "Size"
+        actions:
+          backup:
+            start:
+              text: "Start a backup"
+              title: "Create a backup"
+              confirm: "Are you sure you want to start a new backup?"
+            cancel:
+              text: "Cancel the backup"
+              title: "Cancel a backup"
+              confirm: "Are you sure you want to cancel the backup?"
+          download:
+            text: "Download"
+            title: "Download the backup"
+          destroy:
+            text: "Delete"
+            title: "Remove the backup"
+            confirm: "Are you sure you want to destroy this backup?"
+          restore:
+            start:
+              text: "Restore"
+              title: "Restore the backup"
+              confirm: "Are your sure you want to restore this backup?"
+            cancel:
+              text: "Cancel"
+              title: "Cancel the restore"
+              confirm: "Are your sure you want to cancel the restore?"
+
       customize:
         title: "Customize"
         long_title: "Site Customizations"

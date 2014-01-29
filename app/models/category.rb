@@ -353,8 +353,8 @@ end
 #  color              :string(6)        default("AB9364"), not null
 #  topic_id           :integer
 #  topic_count        :integer          default(0), not null
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
+#  created_at         :datetime
+#  updated_at         :datetime
 #  user_id            :integer          not null
 #  topics_year        :integer
 #  topics_month       :integer
@@ -370,9 +370,12 @@ end
 #  latest_topic_id    :integer
 #  position           :integer
 #  parent_category_id :integer
+#  posts_year         :integer
+#  posts_month        :integer
+#  posts_week         :integer
 #
 # Indexes
 #
-#  index_categories_on_forum_thread_count  (topic_count)
-#  index_categories_on_name                (name) UNIQUE
+#  index_categories_on_name         (name) UNIQUE
+#  index_categories_on_topic_count  (topic_count)
 #

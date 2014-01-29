@@ -8,7 +8,7 @@ class Guardian
   include CategoryGuardian
   include PostGuardain
   include TopicGuardian
-    
+
   class AnonymousUser
     def blank?; true; end
     def admin?; false; end
@@ -193,14 +193,13 @@ class Guardian
 
   def can_send_private_message?(target)
     (User === target || Group === target) &&
+    # User is authenticated
     authenticated? &&
-
     # Can't send message to yourself
     is_not_me?(target) &&
-
     # Have to be a basic level at least
     @user.has_trust_level?(:basic) &&
-
+    # PMs are enabled
     SiteSetting.enable_private_messages
   end
 

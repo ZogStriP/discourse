@@ -34,21 +34,21 @@ describe Admin::ExportController do
         end
 
         it "should not start an export job" do
-          Jobs::Exporter.any_instance.expects(:start_export).never
+          Jobs.expects(:enqueue).with(:exporter).never
           xhr :post, :create
         end
       end
 
       context "when an export is already running" do
         before do
-          Export.stubs(:is_export_running?).returns( true )
+          Export.stubs(:is_running?).returns( true )
         end
         it_should_behave_like "when export should not be started"
       end
 
       context "when an import is currently running" do
         before do
-          Import.stubs(:is_import_running?).returns( true )
+          Import.stubs(:is_running?).returns( true )
         end
         it_should_behave_like "when export should not be started"
       end

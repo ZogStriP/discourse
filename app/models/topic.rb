@@ -714,8 +714,8 @@ end
 #  id                      :integer          not null, primary key
 #  title                   :string(255)      not null
 #  last_posted_at          :datetime
-#  created_at              :datetime         not null
-#  updated_at              :datetime         not null
+#  created_at              :datetime
+#  updated_at              :datetime
 #  views                   :integer          default(0), not null
 #  posts_count             :integer          default(0), not null
 #  user_id                 :integer
@@ -759,11 +759,12 @@ end
 #  auto_close_started_at   :datetime
 #  deleted_by_id           :integer
 #  participant_count       :integer          default(1)
+#  word_count              :integer
 #
 # Indexes
 #
 #  idx_topics_user_id_deleted_at                                (user_id)
-#  index_forum_threads_on_bumped_at                             (bumped_at)
+#  index_topics_on_bumped_at                                    (bumped_at)
 #  index_topics_on_deleted_at_and_visible_and_archetype_and_id  (deleted_at,visible,archetype,id)
 #  index_topics_on_id_and_deleted_at                            (id,deleted_at)
 #

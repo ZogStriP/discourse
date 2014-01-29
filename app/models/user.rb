@@ -645,8 +645,8 @@ end
 #
 #  id                            :integer          not null, primary key
 #  username                      :string(20)       not null
-#  created_at                    :datetime         not null
-#  updated_at                    :datetime         not null
+#  created_at                    :datetime
+#  updated_at                    :datetime
 #  name                          :string(255)
 #  bio_raw                       :text
 #  seen_notification_id          :integer          default(0), not null
@@ -679,7 +679,7 @@ end
 #  flag_level                    :integer          default(0), not null
 #  ip_address                    :inet
 #  new_topic_duration_minutes    :integer
-#  external_links_in_new_tab     :boolean          default(FALSE), not null
+#  external_links_in_new_tab     :boolean          not null
 #  enable_quoting                :boolean          default(TRUE), not null
 #  moderator                     :boolean          default(FALSE)
 #  blocked                       :boolean          default(FALSE)
@@ -689,6 +689,7 @@ end
 #  uploaded_avatar_template      :string(255)
 #  uploaded_avatar_id            :integer
 #  email_always                  :boolean          default(FALSE), not null
+#  watch_new_topics              :boolean          default(FALSE), not null
 #
 # Indexes
 #

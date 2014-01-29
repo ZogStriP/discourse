@@ -31,4 +31,3 @@ end
 #
 #  index_user_visits_on_user_id_and_visited_at  (user_id,visited_at) UNIQUE
 #
-

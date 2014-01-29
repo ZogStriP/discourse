@@ -485,10 +485,9 @@ end
 #  post_number             :integer          not null
 #  raw                     :text             not null
 #  cooked                  :text             not null
-#  created_at              :datetime         not null
-#  updated_at              :datetime         not null
+#  created_at              :datetime
+#  updated_at              :datetime
 #  reply_to_post_number    :integer
-#  version                 :integer          default(1), not null
 #  reply_count             :integer          default(0), not null
 #  quote_count             :integer          default(0), not null
 #  deleted_at              :datetime
@@ -517,10 +516,13 @@ end
 #  like_score              :integer          default(0), not null
 #  deleted_by_id           :integer
 #  edit_reason             :string(255)
+#  word_count              :integer
+#  version                 :integer          default(1), not null
+#  cook_method             :integer          default(1), not null
 #
 # Indexes
 #
 #  idx_posts_user_id_deleted_at             (user_id)
 #  index_posts_on_reply_to_post_number      (reply_to_post_number)
-#  index_posts_on_topic_id_and_post_number  (topic_id,post_number) UNIQUE
+#  index_posts_on_topic_id_and_post_number  (topic_id,post_number)
 #

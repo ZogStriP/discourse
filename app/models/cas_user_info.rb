@@ -16,12 +16,11 @@ end
 #  gender      :string(255)
 #  name        :string(255)
 #  link        :string(255)
-#  created_at  :datetime         not null
-#  updated_at  :datetime         not null
+#  created_at  :datetime
+#  updated_at  :datetime
 #
 # Indexes
 #
 #  index_cas_user_infos_on_cas_user_id  (cas_user_id) UNIQUE
 #  index_cas_user_infos_on_user_id      (user_id) UNIQUE
 #
-

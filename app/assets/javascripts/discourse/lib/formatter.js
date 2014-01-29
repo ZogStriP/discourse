@@ -2,7 +2,8 @@ Discourse.Formatter = (function(){
 
   var updateRelativeAge, autoUpdatingRelativeAge, relativeAge, relativeAgeTiny,
       relativeAgeMedium, relativeAgeMediumSpan, longDate, toTitleCase,
-      shortDate, shortDateNoYear, tinyDateYear, breakUp, relativeAgeTinyShowsYear;
+      shortDate, shortDateNoYear, tinyDateYear, logDate, breakUp,
+      relativeAgeTinyShowsYear;
 
     /*
   * memoize.js
@@ -103,10 +104,13 @@ Discourse.Formatter = (function(){
     return moment(date).format(I18n.t("dates.tiny.date_year"));
   };
 
+  logDate = function(date) {
+    return moment(date).format("YYYY-MM-DD HH:mm:ss");
+  };
+
   // http://stackoverflow.com/questions/196972/convert-string-to-title-case-with-javascript
   // TODO: locale support ?
-  toTitleCase = function toTitleCase(str)
-  {
+  toTitleCase = function toTitleCase(str) {
     return str.replace(/\w\S*/g, function(txt){
       return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
     });
@@ -114,7 +118,6 @@ Discourse.Formatter = (function(){
 
   longDate = function(dt) {
     if (!dt) return;
-
     return moment(dt).longDate();
   };
 
@@ -296,6 +299,7 @@ Discourse.Formatter = (function(){
     updateRelativeAge: updateRelativeAge,
     toTitleCase: toTitleCase,
     shortDate: shortDate,
+    logDate: logDate,
     breakUp: breakUp,
     cappedMemoize: cappedMemoize
   };

@@ -246,6 +246,9 @@ section.details {
 }
 
 table {
+  tr:hover {
+    background-color: darken($white, 2.5%);
+  }
   tr.selected {
     background-color: lighten($blue, 58%);
   }

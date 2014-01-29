@@ -8,20 +8,20 @@ class Adapter2 < Import::Adapter::Base; end
 class Adapter3 < Import::Adapter::Base; end
 
 describe Import do
-  describe "is_import_running?" do
+  describe "is_running?" do
     it "should return true when an import is in progress" do
       $redis.stubs(:get).with(Import.import_running_key).returns('1')
-      Import.is_import_running?.should be_true
+      Import.is_running?.should be_true
     end
 
     it "should return false when an import is not happening" do
       $redis.stubs(:get).with(Import.import_running_key).returns('0')
-      Import.is_import_running?.should be_false
+      Import.is_running?.should be_false
     end
 
     it "should return false when an import has never been run" do
       $redis.stubs(:get).with(Import.import_running_key).returns(nil)
-      Import.is_import_running?.should be_false
+      Import.is_running?.should be_false
     end
   end
 

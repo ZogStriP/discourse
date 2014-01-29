@@ -347,3 +347,11 @@ Handlebars.registerHelper('customHTML', function(property) {
   }
 
 });
+
+Ember.Handlebars.registerBoundHelper('humanSize', function(size) {
+  return new Handlebars.SafeString(I18n.toHumanSize(size));
+});
+
+Ember.Handlebars.registerBoundHelper('logDate', function(dt) {
+  return new Handlebars.SafeString(Discourse.Formatter.logDate(dt));
+});

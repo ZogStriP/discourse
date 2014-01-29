@@ -50,8 +50,7 @@ module Export
 
     def finish
       @schema_data[:schema][:table_count] = @table_data.keys.count
-      json_output_stream.write( Oj.dump(@schema_data.merge(@table_data),
-                                        :mode => :compat) )
+      json_output_stream.write(Oj.dump(@schema_data.merge(@table_data), mode: :compat))
       json_output_stream.close
 
       @filenames = [File.join( tmp_directory('export'), 'tables.json' )]

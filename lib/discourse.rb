@@ -138,18 +138,18 @@ module Discourse
     return base_url_no_prefix + base_uri
   end
 
-  def self.enable_maintenance_mode
-    $redis.set maintenance_mode_key, 1
+  def self.enable_readonly_mode
+    $redis.set readonly_mode_key, 1
     true
   end
 
-  def self.disable_maintenance_mode
-    $redis.del maintenance_mode_key
+  def self.disable_readonly_mode
+    $redis.del readonly_mode_key
     true
   end
 
-  def self.maintenance_mode?
-    !!$redis.get( maintenance_mode_key )
+  def self.readonly_mode?
+    !!$redis.get( readonly_mode_key )
   end
 
   def self.git_version
@@ -200,7 +200,7 @@ module Discourse
 
 private
 
-  def self.maintenance_mode_key
-    'maintenance_mode'
+  def self.readonly_mode_key
+    'readonly_mode'
   end
 end

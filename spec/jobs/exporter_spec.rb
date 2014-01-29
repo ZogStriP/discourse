@@ -6,8 +6,8 @@ describe Jobs::Exporter do
     Jobs::Exporter.any_instance.stubs(:log).returns(true)
     Jobs::Exporter.any_instance.stubs(:create_tar_file).returns(true)
     Export::JsonEncoder.any_instance.stubs(:tmp_directory).returns( File.join(Rails.root, 'tmp', 'exporter_spec') )
-    Discourse.stubs(:enable_maintenance_mode).returns(true)
-    Discourse.stubs(:disable_maintenance_mode).returns(true)
+    Discourse.stubs(:enable_readonly_mode).returns(true)
+    Discourse.stubs(:disable_readonly_mode).returns(true)
   end
 
   describe "execute" do
@@ -16,33 +16,33 @@ describe Jobs::Exporter do
         @testIO = StringIO.new
         Export::JsonEncoder.any_instance.stubs(:json_output_stream).returns(@testIO)
         Jobs::Exporter.any_instance.stubs(:ordered_models_for_export).returns([])
-        Export.stubs(:is_export_running?).returns(false)
-        Export.stubs(:is_import_running?).returns(false)
+        Export.stubs(:is_running?).returns(false)
+        Export.stubs(:is_running?).returns(false)
         @exporter_args = {}
       end
 
       it "should indicate that an export is running" do
         seq = sequence('call sequence')
-        Export.expects(:set_export_started).in_sequence(seq).at_least_once
-        Export.expects(:set_export_is_not_running).in_sequence(seq).at_least_once
+        Export.expects(:mark_as_running!).in_sequence(seq).at_least_once
+        Export.expects(:mark_as_not_running!).in_sequence(seq).at_least_once
         Jobs::Exporter.new.execute( @exporter_args )
       end
 
-      it "should put the site in maintenance mode when it starts" do
+      it "should put the site in readonly mode when it starts" do
         encoder = stub_everything
         Export::JsonEncoder.stubs(:new).returns(encoder)
         seq = sequence('export-sequence')
-        Discourse.expects(:enable_maintenance_mode).in_sequence(seq).at_least_once
+        Discourse.expects(:enable_readonly_mode).in_sequence(seq).at_least_once
         encoder.expects(:write_schema_info).in_sequence(seq).at_least_once
         Jobs::Exporter.new.execute( @exporter_args )
       end
 
-      it "should take the site out of maintenance mode when it ends" do
+      it "should take the site out of readonly mode when it ends" do
         encoder = stub_everything
         Export::JsonEncoder.stubs(:new).returns(encoder)
         seq = sequence('export-sequence')
         encoder.expects(:write_schema_info).in_sequence(seq).at_least_once
-        Discourse.expects(:disable_maintenance_mode).in_sequence(seq).at_least_once
+        Discourse.expects(:disable_readonly_mode).in_sequence(seq).at_least_once
         Jobs::Exporter.new.execute( @exporter_args )
       end
 
@@ -55,7 +55,7 @@ describe Jobs::Exporter do
 
       describe "specifying an invalid format" do
         it "should raise an exception and not flag that an export has started" do
-          Jobs::Exporter.expects(:set_export_started).never
+          Jobs::Exporter.expects(:mark_as_running!).never
           expect {
             Jobs::Exporter.new.execute( @exporter_args.merge( format: :interpretive_dance ) )
           }.to raise_error(Export::FormatInvalidError)
@@ -163,11 +163,11 @@ describe Jobs::Exporter do
 
     context 'when an export is already running' do
       before do
-        Export.expects(:is_export_running?).returns(true)
+        Export.expects(:is_running?).returns(true)
       end
 
       it "should not start an export and raise an exception" do
-        Export.expects(:set_export_started).never
+        Export.expects(:mark_as_running!).never
         Jobs::Exporter.any_instance.expects(:start_export).never
         expect {
           Jobs::Exporter.new.execute({})
@@ -177,11 +177,11 @@ describe Jobs::Exporter do
 
     context 'when an import is running' do
       before do
-        Import.expects(:is_import_running?).returns(true)
+        Import.expects(:is_running?).returns(true)
       end
 
       it "should not start an export and raise an exception" do
-        Export.expects(:set_export_started).never
+        Export.expects(:mark_as_running!).never
         Jobs::Exporter.any_instance.expects(:start_export).never
         expect {
           Jobs::Exporter.new.execute({})

@@ -93,8 +93,3 @@ Discourse.Ajax = Em.Mixin.create({
   }
 
 });
-
-
-
-
-

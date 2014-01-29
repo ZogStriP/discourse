@@ -1,0 +1,30 @@
+<table>
+  <tr>
+    <th width="40%">{{i18n admin.backups.columns.filename}}</th>
+    <th width="30%">{{i18n admin.backups.columns.size}}</th>
+    <th>
+      {{#if isBackupOrRestoreRunning}}
+        <button {{action cancelBackup}} class="btn btn-danger" title="{{i18n admin.backups.actions.backup.cancel.title}}"><i class="fa fa-times"></i>{{i18n admin.backups.actions.backup.cancel.text}}</button>
+      {{else}}
+        <button {{action startBackup}} class="btn btn-primary" title="{{i18n admin.backups.actions.backup.start.title}}"><i class="fa fa-rocket"></i>{{i18n admin.backups.actions.backup.start.text}}</button>
+      {{/if}}
+    </th>
+  </tr>
+  {{#each backups}}
+    <tr>
+      <td>{{filename}}</td>
+      <td>{{humanSize size}}</td>
+      <td>
+        <a {{bind-attr href="link"}} class="btn" title="{{i18n admin.backups.actions.download.title}}"><i class="fa fa-download"></i>{{i18n admin.backups.actions.download.text}}</a>
+        <button {{action destroyBackup this}} class="btn btn-danger" title="{{i18n admin.backups.actions.destroy.title}}"><i class="fa fa-trash-o"></i>{{i18n admin.backups.actions.destroy.text}}</button>
+        <button {{action startRestore this}} class="btn" disabled title="{{i18n admin.backups.actions.restore.start.title}}"><i class="fa fa-undo"></i>{{i18n admin.backups.actions.restore.start.text}}</button>
+      </td>
+    </tr>
+  {{else}}
+    <tr>
+      <td>{{i18n admin.backups.none}}</td>
+      <td></td>
+      <td></td>
+    </tr>
+  {{/each}}
+</table>

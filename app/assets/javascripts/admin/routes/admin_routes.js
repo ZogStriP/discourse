@@ -23,6 +23,10 @@ Discourse.Route.buildRoutes(function() {
     this.route('customize');
     this.route('api');
 
+    this.resource('admin.backups', { path: '/backups' }, function() {
+      this.route('logs');
+    });
+
     this.resource('adminReports', { path: '/reports/:type' });
 
     this.resource('adminFlags', { path: '/flags' }, function() {

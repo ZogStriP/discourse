@@ -29,7 +29,6 @@ class ApplicationController < ActionController::Base
   before_filter :set_mobile_view
   before_filter :inject_preview_style
   before_filter :disable_customization
-  before_filter :block_if_maintenance_mode
   before_filter :authorize_mini_profiler
   before_filter :store_incoming_links
   before_filter :preload_json
@@ -244,16 +243,6 @@ class ApplicationController < ActionController::Base
         render json: MultiJson.dump(json)
       else
         render_json_error(obj)
-      end
-    end
-
-    def block_if_maintenance_mode
-      if Discourse.maintenance_mode?
-        if request.format.json?
-          render status: 503, json: failed_json.merge(message: I18n.t('site_under_maintenance'))
-        else
-          render status: 503, file: File.join( Rails.root, 'public', '503.html' ), layout: false
-        end
       end
     end
 
